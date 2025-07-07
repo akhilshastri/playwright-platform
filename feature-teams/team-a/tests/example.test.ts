@@ -1,10 +1,9 @@
 
-import { globalSetup } from 'playwright-core-utils/dist/utils/setup';
-import { performLogin } from 'playwright-core-utils/dist/flows/loginFlow';
-import { validCredentials } from 'playwright-core-utils/dist/utils/testData';
+import { globalSetup, performLogin, validCredentials } from 'playwright-core-utils';
 import { Browser, Page } from 'playwright';
 import { expect } from 'chai';
 
+// @flow loginFlow
 describe('Team A Login Tests', function() {
   this.timeout(30000);
 

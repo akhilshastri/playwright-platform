@@ -5,6 +5,7 @@
   "workspaces": ["core", "feature-teams/*"],
   "scripts": {
     "test": "npm run test --workspaces",
-    "test:affected": "node scripts/runAffectedTests.js"
+    "test:affected": "node scripts/runAffectedTests.js",
+    "test:smart": "node scripts/runFlowTaggedTests.js"
   }
 }
