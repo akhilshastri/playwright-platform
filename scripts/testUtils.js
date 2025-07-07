@@ -3,6 +3,50 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Track all spawned child processes
+const childProcesses = [];
+
+// Cleanup function to kill all child processes
+function cleanupChildProcesses() {
+  console.log(`Cleaning up ${childProcesses.length} child processes...`);
+  childProcesses.forEach(process => {
+    try {
+      if (!process.killed) {
+        process.kill();
+        console.log(`Process ${process.pid} terminated`);
+      }
+    } catch (err) {
+      console.error(`Error killing process ${process.pid}:`, err.message);
+    }
+  });
+}
+
+// Register cleanup handlers for process exit
+process.on('SIGINT', () => {
+  console.log('Received SIGINT signal. Terminating child processes...');
+  cleanupChildProcesses();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM signal. Terminating child processes...');
+  cleanupChildProcesses();
+  process.exit(0);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  cleanupChildProcesses();
+  process.exit(1);
+});
+
+// Handle normal exit
+process.on('exit', () => {
+  console.log('Process exiting normally. Cleaning up child processes...');
+  cleanupChildProcesses();
+});
+
 // Get changed files since last commit or between branches
 function getChangedFiles() {
   try {
@@ -92,7 +136,7 @@ function findTestsForChangedImports(importPathMap) {
 function runTestsForTeam(team, tests, originalDir) {
   return new Promise((resolve, reject) => {
     console.log(`Running tests for ${team}...`);
-    
+
     try {
       // Change to team directory
       const teamDir = path.join(__dirname, '..', 'feature-teams', team);
@@ -103,17 +147,28 @@ function runTestsForTeam(team, tests, originalDir) {
 
       // Run only the affected tests
       const testPaths = tests.map(t => t.replace('.ts', '.js').replace(`feature-teams/${team}/`, 'dist/'));
-      
+
       // Use spawn instead of execSync to run tests in parallel
       const mochaProcess = spawn('npx', ['mocha', ...testPaths], { 
         stdio: 'inherit',
         shell: true
       });
 
+      // Register the process in the global tracker
+      childProcesses.push(mochaProcess);
+      console.log(`Registered process ${mochaProcess.pid} for team ${team}`);
+
       mochaProcess.on('close', (code) => {
         // Return to original directory
         process.chdir(originalDir);
-        
+
+        // Remove the process from the global tracker
+        const index = childProcesses.indexOf(mochaProcess);
+        if (index !== -1) {
+          childProcesses.splice(index, 1);
+          console.log(`Process ${mochaProcess.pid} for team ${team} completed and removed from tracker`);
+        }
+
         if (code === 0) {
           console.log(`Tests for ${team} completed successfully`);
           resolve();
@@ -126,6 +181,14 @@ function runTestsForTeam(team, tests, originalDir) {
       mochaProcess.on('error', (error) => {
         console.error(`Error running tests for ${team}:`, error.message);
         process.chdir(originalDir);
+
+        // Remove the process from the global tracker
+        const index = childProcesses.indexOf(mochaProcess);
+        if (index !== -1) {
+          childProcesses.splice(index, 1);
+          console.log(`Process ${mochaProcess.pid} for team ${team} errored and removed from tracker`);
+        }
+
         resolve(); // Resolve anyway to continue with other teams
       });
     } catch (error) {
@@ -166,16 +229,16 @@ async function runTests(testsToRun, description = 'affected') {
 
   // Save original directory
   const originalDir = process.cwd();
-  
+
   // Create an array of team test tasks
   const teamTasks = Array.from(testsByTeam.entries()).map(([team, tests]) => {
     return { team, tests };
   });
-  
+
   // Process teams in parallel with a limit based on CPU cores
   const runningTasks = [];
   const completedTeams = new Set();
-  
+
   // Process teams in batches based on CPU cores
   while (teamTasks.length > 0 || runningTasks.length > 0) {
     // Fill up to numCores tasks
@@ -192,16 +255,16 @@ async function runTests(testsToRun, description = 'affected') {
         });
       runningTasks.push(promise);
     }
-    
+
     // Wait for at least one task to complete if we have running tasks
     if (runningTasks.length > 0) {
       await Promise.race(runningTasks);
     }
   }
-  
+
   // Ensure we're back in the original directory
   process.chdir(originalDir);
-  
+
   console.log(`Completed running tests for all teams: ${Array.from(completedTeams).join(', ')}`);
 }
 
