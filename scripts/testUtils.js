@@ -7,7 +7,7 @@ const os = require('os');
 const childProcesses = [];
 
 // Cleanup function to kill all child processes
-function cleanupChildProcesses() {
+const cleanupChildProcesses = () => {
   console.log(`Cleaning up ${childProcesses.length} child processes...`);
   childProcesses.forEach(process => {
     try {
@@ -48,7 +48,7 @@ process.on('exit', () => {
 });
 
 // Get changed files since last commit or between branches
-function getChangedFiles() {
+const getChangedFiles = () => {
   try {
     // If comparing with another branch is needed, this can be modified
     const output = execSync('git diff --name-only HEAD~1 HEAD').toString();
@@ -65,7 +65,7 @@ function getChangedFiles() {
 }
 
 // Map core files to their import paths
-function mapCoreFilesToImportPaths(changedFiles) {
+const mapCoreFilesToImportPaths = (changedFiles) => {
   const importPathMap = new Map();
 
   changedFiles.forEach(file => {
@@ -82,10 +82,10 @@ function mapCoreFilesToImportPaths(changedFiles) {
 }
 
 // Find all test files in the project
-function findAllTestFiles() {
+const findAllTestFiles = () => {
   const testFiles = [];
 
-  function searchDirectory(dir) {
+  const searchDirectory = (dir) => {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
 
     for (const entry of entries) {
@@ -97,7 +97,7 @@ function findAllTestFiles() {
         testFiles.push(fullPath);
       }
     }
-  }
+  };
 
   // Start search from feature-teams directory
   searchDirectory(path.join(__dirname, '..', 'feature-teams'));
@@ -106,7 +106,7 @@ function findAllTestFiles() {
 }
 
 // Find tests that import the changed files
-function findTestsForChangedImports(importPathMap) {
+const findTestsForChangedImports = (importPathMap) => {
   if (importPathMap.size === 0) {
     return [];
   }
@@ -133,7 +133,7 @@ function findTestsForChangedImports(importPathMap) {
 }
 
 // Run tests for a specific team
-function runTestsForTeam(team, tests, originalDir) {
+const runTestsForTeam = (team, tests, originalDir) => {
   return new Promise((resolve, reject) => {
     console.log(`Running tests for ${team}...`);
 
@@ -200,7 +200,7 @@ function runTestsForTeam(team, tests, originalDir) {
 }
 
 // Run the tests in parallel using all available CPU cores
-async function runTests(testsToRun, description = 'affected') {
+const runTests = async (testsToRun, description = 'affected') => {
   if (testsToRun.length === 0) {
     console.log(`No ${description} tests found.`);
     return;

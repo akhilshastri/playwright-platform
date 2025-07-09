@@ -7,7 +7,7 @@ const {
 } = require('./testUtils');
 
 // Main function
-function main() {
+const main = () => {
   const changedFiles = getChangedFiles();
   console.log('Changed files:', changedFiles);
 

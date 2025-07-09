@@ -9,7 +9,7 @@ const {
 } = require('./testUtils');
 
 // Detect which flows have changed based on file changes
-function detectChangedFlows(changedFiles) {
+const detectChangedFlows = (changedFiles) => {
   const changedFlows = new Set();
 
   changedFiles.forEach(file => {
@@ -25,7 +25,7 @@ function detectChangedFlows(changedFiles) {
 }
 
 // Parse test files to extract flow tags
-function parseFlowTags(testFile) {
+const parseFlowTags = (testFile) => {
   try {
     const content = fs.readFileSync(testFile, 'utf8');
     const flowTags = [];
@@ -46,7 +46,7 @@ function parseFlowTags(testFile) {
 }
 
 // Find tests that are tagged with the changed flows
-function findTestsForChangedFlows(changedFlows) {
+const findTestsForChangedFlows = (changedFlows) => {
   if (changedFlows.length === 0) {
     return [];
   }
@@ -70,7 +70,7 @@ function findTestsForChangedFlows(changedFlows) {
 }
 
 // Main function
-function main() {
+const main = () => {
   const changedFiles = getChangedFiles();
   console.log('Changed files:', changedFiles);
 
