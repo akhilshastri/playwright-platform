@@ -14,7 +14,8 @@
       "@flows/*": ["flows/*"],
       "@utils/*": ["utils/*"],
       "@config/*": ["config/*"],
-      "@recordings/*": ["recordings/*"]
+      "@recordings/*": ["recordings/*"],
+      "playwright-core-utils/*": ["../core/src/*"]
     }
   },
   "include": ["src"]
